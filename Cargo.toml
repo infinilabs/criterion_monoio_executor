@@ -1,0 +1,11 @@
+[package]
+name = "criterion_monoio_executor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+criterion = "0.5.1"
+monoio = "0.2.4"
+
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["async"] }
