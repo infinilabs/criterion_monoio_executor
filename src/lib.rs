@@ -26,23 +26,47 @@ impl<D: Driver> AsyncExecutor for MonoioRuntimeExecutor<D> {
     }
 }
 
-/// Executor wrapper for [`FusionRuntime`].
-pub struct MonoioFusionRuntimeExecutor<L: Driver, R: Driver> {
-    rt: RefCell<FusionRuntime<L, R>>,
-}
-
-impl<L: Driver, R: Driver> MonoioFusionRuntimeExecutor<L, R> {
-    /// Create an executor from a [`FusionRuntime`] instance.
-    pub fn new(rt: FusionRuntime<L, R>) -> Self {
-        Self {
-            rt: RefCell::new(rt),
+cfg_if::cfg_if! {
+    if #[cfg(target_os = "linux")] {
+        /// Executor wrapper for [`FusionRuntime`].
+        pub struct MonoioFusionRuntimeExecutor<L: Driver, R: Driver> {
+            rt: RefCell<FusionRuntime<L, R>>,
         }
-    }
-}
 
-impl<L: Driver, R: Driver> AsyncExecutor for MonoioFusionRuntimeExecutor<L, R> {
-    fn block_on<T>(&self, future: impl std::future::Future<Output = T>) -> T {
-        self.rt.borrow_mut().block_on(future)
+        impl<L: Driver, R: Driver> MonoioFusionRuntimeExecutor<L, R> {
+            /// Create an executor from a [`FusionRuntime`] instance.
+            pub fn new(rt: FusionRuntime<L, R>) -> Self {
+                Self {
+                    rt: RefCell::new(rt),
+                }
+            }
+        }
+
+        impl<L: Driver, R: Driver> AsyncExecutor for MonoioFusionRuntimeExecutor<L, R> {
+            fn block_on<T>(&self, future: impl std::future::Future<Output = T>) -> T {
+                self.rt.borrow_mut().block_on(future)
+            }
+        }
+    } else if #[cfg(target_os = "macos")] {
+        /// Executor wrapper for [`FusionRuntime`].
+        pub struct MonoioFusionRuntimeExecutor<R: Driver> {
+            rt: RefCell<FusionRuntime<R>>,
+        }
+
+        impl<R: Driver> MonoioFusionRuntimeExecutor<R> {
+            /// Create an executor from a [`FusionRuntime`] instance.
+            pub fn new(rt: FusionRuntime<R>) -> Self {
+                Self {
+                    rt: RefCell::new(rt),
+                }
+            }
+        }
+
+        impl<R: Driver> AsyncExecutor for MonoioFusionRuntimeExecutor<R> {
+            fn block_on<T>(&self, future: impl std::future::Future<Output = T>) -> T {
+                self.rt.borrow_mut().block_on(future)
+            }
+        }
     }
 }
 
